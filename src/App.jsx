@@ -791,18 +791,22 @@ export default function MatrixWallpaperGenerator() {
 
   // ── MOBILE LAYOUT ──
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'Share Tech Mono', 'VT323', monospace", background: "#0c0c0c", color: "#c8c8c8", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Share Tech Mono', 'VT323', monospace", background: "#0c0c0c", color: "#c8c8c8", overflow: "hidden" }}>
       {/* Mobile header */}
       <div style={{
-        background: "#111", borderBottom: "1px solid #1e1e1e", padding: "10px 14px",
+        background: "#111", borderBottom: "1px solid #1e1e1e",
+        padding: "10px 14px", paddingTop: "calc(10px + env(safe-area-inset-top, 0px))",
         display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0,
       }}>
         <div style={{ fontSize: 13, fontWeight: 800, color: fgColor, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace" }}>MATRIX ME</div>
         <div style={{ fontSize: 10, color: "#555" }}>Impulsively made by Inje</div>
       </div>
 
-      {/* Preview area */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#080808", position: "relative", minHeight: 0 }}>
+      {/* Preview area — tapping here dismisses settings */}
+      <div
+        onClick={() => { if (showPanel) setShowPanel(false); }}
+        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#080808", position: "relative", minHeight: 0 }}
+      >
         <canvas ref={canvasRef} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
         {generating && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)" }}>
@@ -814,9 +818,31 @@ export default function MatrixWallpaperGenerator() {
         </div>
       </div>
 
+      {/* Dimmed backdrop when settings open — tap to dismiss */}
+      {showPanel && (
+        <div
+          onClick={() => setShowPanel(false)}
+          style={{ position: "absolute", inset: 0, zIndex: 10, background: "rgba(0,0,0,0.4)" }}
+        />
+      )}
+
+      {/* Slide-up settings panel */}
+      {showPanel && (
+        <div style={{
+          position: "absolute", bottom: "calc(56px + env(safe-area-inset-bottom, 0px))", left: 0, right: 0, zIndex: 15,
+          maxHeight: "55vh", overflowY: "auto", WebkitOverflowScrolling: "touch",
+          background: "#111", borderTop: "1px solid #1e1e1e", borderRadius: "12px 12px 0 0",
+          padding: "12px 14px 20px", boxShadow: "0 -8px 30px rgba(0,0,0,0.7)",
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: fgColor, marginBottom: 8, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace" }}>SETTINGS</div>
+          {controls}
+        </div>
+      )}
+
       {/* Sticky bottom bar with toggle + actions */}
       <div style={{
-        background: "#111", borderTop: "1px solid #1e1e1e", padding: "8px 12px",
+        background: "#111", borderTop: "1px solid #1e1e1e",
+        padding: "8px 12px", paddingBottom: "calc(8px + env(safe-area-inset-bottom, 0px))",
         display: "flex", gap: 6, flexShrink: 0, zIndex: 20,
       }}>
         <button
@@ -836,19 +862,6 @@ export default function MatrixWallpaperGenerator() {
           ↓
         </button>
       </div>
-
-      {/* Slide-up settings panel */}
-      {showPanel && (
-        <div style={{
-          position: "absolute", bottom: 52, left: 0, right: 0, zIndex: 15,
-          maxHeight: "60vh", overflowY: "auto", WebkitOverflowScrolling: "touch",
-          background: "#111", borderTop: "1px solid #1e1e1e",
-          padding: "12px 14px 20px", boxShadow: "0 -8px 30px rgba(0,0,0,0.7)",
-        }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: fgColor, marginBottom: 8, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace" }}>SETTINGS</div>
-          {controls}
-        </div>
-      )}
     </div>
   );
 }
