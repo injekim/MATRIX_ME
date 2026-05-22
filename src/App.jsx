@@ -558,7 +558,8 @@ export default function MatrixWallpaperGenerator() {
   const [crtPixelBloom, setCrtPixelBloom] = useState(0.9);
 
   const isCustomRes = RESOLUTIONS[resIdx].label === "Custom";
-  const res = isCustomRes ? { w: customW || 1920, h: customH || 1080 } : RESOLUTIONS[resIdx];
+  const resW = isCustomRes ? (customW || 1920) : RESOLUTIONS[resIdx].w;
+  const resH = isCustomRes ? (customH || 1080) : RESOLUTIONS[resIdx].h;
   const activeChars = charsetKey === "custom" ? customChars : CHARSETS[charsetKey];
 
   const applyPreset = (key) => { setPreset(key); setBgColor(PRESETS[key].bg); setFgColor(PRESETS[key].fg); setGlowColor(PRESETS[key].glow); };
@@ -566,10 +567,9 @@ export default function MatrixWallpaperGenerator() {
   const generate = useCallback(() => {
     if (!canvasRef.current) return;
     setGenerating(true);
-    // Use setTimeout to let the UI update before heavy render
     setTimeout(() => {
       generateWallpaper(canvasRef.current, {
-        width: res.w, height: res.h, charset: activeChars,
+        width: resW, height: resH, charset: activeChars,
         bgColor, fgColor, glowColor, fontSize, effect, pattern,
         glowIntensity, glowRadius, charOpacityMin: opacityMin,
         charOpacityMax: opacityMax, seed, fontFamily,
@@ -579,14 +579,14 @@ export default function MatrixWallpaperGenerator() {
       });
       setGenerating(false);
     }, 50);
-  }, [res, activeChars, bgColor, fgColor, glowColor, fontSize, effect, pattern, glowIntensity, glowRadius, opacityMin, opacityMax, seed, fontFamily, depthVariation, brightnessVariation, layers, bokehBack, chromaticAberration, embedText, embedMode, crtPixelSize, crtPixelBloom, customW, customH]);
+  }, [resW, resH, activeChars, bgColor, fgColor, glowColor, fontSize, effect, pattern, glowIntensity, glowRadius, opacityMin, opacityMax, seed, fontFamily, depthVariation, brightnessVariation, layers, bokehBack, chromaticAberration, embedText, embedMode, crtPixelSize, crtPixelBloom]);
 
   useEffect(() => { generate(); }, [generate]);
 
   const download = () => {
     if (!canvasRef.current) return;
     const link = document.createElement("a");
-    link.download = `matrix_${res.w}x${res.h}_${charsetKey}.png`;
+    link.download = `matrix_${resW}x${resH}_${charsetKey}.png`;
     link.href = canvasRef.current.toDataURL("image/png");
     link.click();
   };
@@ -642,8 +642,9 @@ export default function MatrixWallpaperGenerator() {
             <div style={{ flex: 1 }}>
               <label style={{ ...S.label, marginBottom: 2 }}>Width</label>
               <input
-                type="number" min={100} max={7680} value={customW}
-                onChange={e => setCustomW(Math.max(100, Math.min(7680, +e.target.value || 100)))}
+                type="number" min={100} max={7680} defaultValue={customW}
+                onBlur={e => setCustomW(Math.max(100, Math.min(7680, +e.target.value || 1920)))}
+                onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                 style={S.input}
               />
             </div>
@@ -651,8 +652,9 @@ export default function MatrixWallpaperGenerator() {
             <div style={{ flex: 1 }}>
               <label style={{ ...S.label, marginBottom: 2 }}>Height</label>
               <input
-                type="number" min={100} max={7680} value={customH}
-                onChange={e => setCustomH(Math.max(100, Math.min(7680, +e.target.value || 100)))}
+                type="number" min={100} max={7680} defaultValue={customH}
+                onBlur={e => setCustomH(Math.max(100, Math.min(7680, +e.target.value || 1080)))}
+                onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                 style={S.input}
               />
             </div>
@@ -807,7 +809,7 @@ export default function MatrixWallpaperGenerator() {
             </div>
           )}
           <div style={{ position: "absolute", bottom: 12, right: 16, fontSize: 10, color: "#333", fontFamily: "inherit" }}>
-            {res.w}×{res.h} · {charsetKey} · {fontFamily} · {layers > 1 ? `${layers} layers` : "single layer"}
+            {resW}×{resH} · {charsetKey} · {fontFamily} · {layers > 1 ? `${layers} layers` : "single layer"}
           </div>
         </div>
       </div>
@@ -839,7 +841,7 @@ export default function MatrixWallpaperGenerator() {
           </div>
         )}
         <div style={{ position: "absolute", bottom: 8, right: 10, fontSize: 9, color: "#333" }}>
-          {res.w}×{res.h} · {charsetKey}
+          {resW}×{resH} · {charsetKey}
         </div>
       </div>
 
