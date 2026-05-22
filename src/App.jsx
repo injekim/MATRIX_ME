@@ -58,6 +58,7 @@ const RESOLUTIONS = [
   { w: 2560, h: 1080, label: "2560×1080 (Ultrawide)" },
   { w: 3440, h: 1440, label: "3440×1440 (Ultrawide QHD)" },
   { w: 2048, h: 2048, label: "2048×2048 (Square)" },
+  { w: 0, h: 0, label: "Custom" },
 ];
 
 const EFFECTS = {
@@ -504,15 +505,15 @@ function useIsMobile(breakpoint = 700) {
 
 const S = {
   root: { display: "flex", height: "100vh", fontFamily: "'Share Tech Mono', 'VT323', monospace", background: "#0c0c0c", color: "#c8c8c8", overflow: "hidden" },
-  sidebar: { width: 330, minWidth: 330, background: "#111", borderRight: "1px solid #1e1e1e", overflowY: "auto", padding: "16px 14px", display: "flex", flexDirection: "column", gap: 0 },
+  sidebar: { width: 330, minWidth: 330, background: "#111", borderRight: "1px solid #1e1e1e", overflowY: "auto", overflowX: "hidden", padding: "16px 14px", display: "flex", flexDirection: "column", gap: 0 },
   preview: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#080808", overflow: "hidden", position: "relative" },
-  select: { width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ddd", padding: "6px 8px", borderRadius: 4, fontSize: 12, outline: "none", fontFamily: "inherit" },
+  select: { width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ddd", padding: "6px 8px", borderRadius: 4, fontSize: 12, outline: "none", fontFamily: "inherit", boxSizing: "border-box" },
   input: { width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ddd", padding: "6px 8px", borderRadius: 4, fontSize: 12, outline: "none", fontFamily: "inherit", boxSizing: "border-box" },
   range: { width: "100%", accentColor: "#18ffff", height: 4, cursor: "pointer" },
   row: { display: "flex", gap: 6, alignItems: "center" },
   label: { fontSize: 11, color: "#999", marginBottom: 3, display: "block" },
-  presetGrid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 },
-  presetBtn: (active) => ({ width: "100%", aspectRatio: "1", borderRadius: 4, border: active ? "2px solid #fff" : "1px solid #333", cursor: "pointer", padding: 0, transition: "border 0.15s" }),
+  presetGrid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4, width: "100%" },
+  presetBtn: (active) => ({ width: "100%", aspectRatio: "1.2", borderRadius: 4, border: active ? "2px solid #fff" : "1px solid #333", cursor: "pointer", padding: 0, transition: "border 0.15s", overflow: "hidden", minWidth: 0 }),
   btn: { width: "100%", padding: "10px", background: "#00ff41", color: "#000", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.03em" },
   btnSec: { width: "100%", padding: "8px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 12, cursor: "pointer", fontFamily: "inherit" },
   sub: { fontSize: 10, color: "#555", marginBottom: 12 },
@@ -533,7 +534,9 @@ export default function MatrixWallpaperGenerator() {
   const [fgColor, setFgColor] = useState(PRESETS.ocean.fg);
   const [glowColor, setGlowColor] = useState(PRESETS.ocean.glow);
   const [resIdx, setResIdx] = useState(2);
-  const [fontSize, setFontSize] = useState(45);
+  const [customW, setCustomW] = useState(1920);
+  const [customH, setCustomH] = useState(1080);
+  const [fontSize, setFontSize] = useState(55);
   const [effect, setEffect] = useState("crt_vignette");
   const [pattern, setPattern] = useState("uniform");
   const [glowIntensity, setGlowIntensity] = useState(0.6);
@@ -554,7 +557,8 @@ export default function MatrixWallpaperGenerator() {
   const [crtPixelSize, setCrtPixelSize] = useState(6);
   const [crtPixelBloom, setCrtPixelBloom] = useState(0.9);
 
-  const res = RESOLUTIONS[resIdx];
+  const isCustomRes = RESOLUTIONS[resIdx].label === "Custom";
+  const res = isCustomRes ? { w: customW || 1920, h: customH || 1080 } : RESOLUTIONS[resIdx];
   const activeChars = charsetKey === "custom" ? customChars : CHARSETS[charsetKey];
 
   const applyPreset = (key) => { setPreset(key); setBgColor(PRESETS[key].bg); setFgColor(PRESETS[key].fg); setGlowColor(PRESETS[key].glow); };
@@ -575,7 +579,7 @@ export default function MatrixWallpaperGenerator() {
       });
       setGenerating(false);
     }, 50);
-  }, [res, activeChars, bgColor, fgColor, glowColor, fontSize, effect, pattern, glowIntensity, glowRadius, opacityMin, opacityMax, seed, fontFamily, depthVariation, brightnessVariation, layers, bokehBack, chromaticAberration, embedText, embedMode, crtPixelSize, crtPixelBloom]);
+  }, [res, activeChars, bgColor, fgColor, glowColor, fontSize, effect, pattern, glowIntensity, glowRadius, opacityMin, opacityMax, seed, fontFamily, depthVariation, brightnessVariation, layers, bokehBack, chromaticAberration, embedText, embedMode, crtPixelSize, crtPixelBloom, customW, customH]);
 
   useEffect(() => { generate(); }, [generate]);
 
@@ -633,11 +637,32 @@ export default function MatrixWallpaperGenerator() {
         <select style={S.select} value={resIdx} onChange={e => setResIdx(+e.target.value)}>
           {RESOLUTIONS.map((r, i) => <option key={i} value={i}>{r.label}</option>)}
         </select>
+        {isCustomRes && (
+          <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ ...S.label, marginBottom: 2 }}>Width</label>
+              <input
+                type="number" min={100} max={7680} value={customW}
+                onChange={e => setCustomW(Math.max(100, Math.min(7680, +e.target.value || 100)))}
+                style={S.input}
+              />
+            </div>
+            <span style={{ color: "#444", fontSize: 14, marginTop: 14 }}>×</span>
+            <div style={{ flex: 1 }}>
+              <label style={{ ...S.label, marginBottom: 2 }}>Height</label>
+              <input
+                type="number" min={100} max={7680} value={customH}
+                onChange={e => setCustomH(Math.max(100, Math.min(7680, +e.target.value || 100)))}
+                style={S.input}
+              />
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* ── SIZE & DENSITY ── */}
       <Section title={`Character Size: ${fontSize}px`}>
-        <input type="range" min={3} max={60} step={1} value={fontSize} onChange={e => setFontSize(+e.target.value)} style={S.range} />
+        <input type="range" min={3} max={100} step={1} value={fontSize} onChange={e => setFontSize(+e.target.value)} style={S.range} />
       </Section>
 
       {/* ── PATTERN ── */}
