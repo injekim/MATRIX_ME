@@ -444,7 +444,8 @@ function generateWallpaper(canvas, opts) {
   }
 
   if (doVignette) {
-    const vg = ctx.createRadialGradient(width / 2, height / 2, width * 0.25, width / 2, height / 2, width * 0.8);
+    const diag = Math.sqrt(width * width + height * height);
+    const vg = ctx.createRadialGradient(width / 2, height / 2, diag * 0.2, width / 2, height / 2, diag * 0.55);
     vg.addColorStop(0, "rgba(0,0,0,0)");
     vg.addColorStop(0.6, "rgba(0,0,0,0.15)");
     vg.addColorStop(1, "rgba(0,0,0,0.7)");
@@ -533,7 +534,7 @@ export default function MatrixWallpaperGenerator() {
   const [bgColor, setBgColor] = useState(PRESETS.ocean.bg);
   const [fgColor, setFgColor] = useState(PRESETS.ocean.fg);
   const [glowColor, setGlowColor] = useState(PRESETS.ocean.glow);
-  const [resIdx, setResIdx] = useState(2);
+  const [resIdx, setResIdx] = useState(() => window.innerWidth <= 700 ? 4 : 0);
   const [customW, setCustomW] = useState(1920);
   const [customH, setCustomH] = useState(1080);
   const [fontSize, setFontSize] = useState(55);
@@ -581,7 +582,11 @@ export default function MatrixWallpaperGenerator() {
     }, 50);
   }, [resW, resH, activeChars, bgColor, fgColor, glowColor, fontSize, effect, pattern, glowIntensity, glowRadius, opacityMin, opacityMax, seed, fontFamily, depthVariation, brightnessVariation, layers, bokehBack, chromaticAberration, embedText, embedMode, crtPixelSize, crtPixelBloom]);
 
-  useEffect(() => { generate(); }, [generate]);
+  const [fontsReady, setFontsReady] = useState(false);
+  useEffect(() => {
+    document.fonts.ready.then(() => setFontsReady(true));
+  }, []);
+  useEffect(() => { if (fontsReady) generate(); }, [generate, fontsReady]);
 
   const download = () => {
     if (!canvasRef.current) return;
@@ -778,8 +783,14 @@ export default function MatrixWallpaperGenerator() {
       </Section>
 
       {/* ── SEED ── */}
-      <Section title={`Seed: ${seed}`} defaultOpen={false}>
-        <button style={S.btnSec} onClick={() => setSeed(Math.floor(Math.random() * 999999))}>Randomize Seed</button>
+      <Section title="Seed" defaultOpen={false}>
+        <input
+          type="number" value={seed}
+          onChange={e => setSeed(+e.target.value || 0)}
+          style={S.input}
+          placeholder="Enter a seed number"
+        />
+        <div style={S.tagline}>Same seed + same settings = same wallpaper</div>
       </Section>
     </>
   );
@@ -789,11 +800,11 @@ export default function MatrixWallpaperGenerator() {
     return (
       <div style={S.root}>
         <div style={S.sidebar}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: fgColor, marginBottom: 1, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace", lineHeight: 1.4 }}>MATRIX ME</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: fgColor, marginBottom: 1, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace", lineHeight: 1.4 }}>MATRIX_ME</div>
           <div style={S.sub}>Impulsively made by Inje</div>
           {controls}
           <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-            <button style={{ ...S.btn, background: fgColor, opacity: generating ? 0.5 : 1 }} onClick={generate} disabled={generating}>
+            <button style={{ ...S.btn, background: fgColor, opacity: generating ? 0.5 : 1 }} onClick={() => setSeed(Math.floor(Math.random() * 999999))} disabled={generating}>
               {generating ? "⏳ RENDERING…" : "▶ REGENERATE"}
             </button>
             <button style={{ ...S.btn, background: "#fff", color: "#000" }} onClick={download}>
@@ -825,7 +836,7 @@ export default function MatrixWallpaperGenerator() {
         padding: "10px 14px", paddingTop: "calc(10px + env(safe-area-inset-top, 0px))",
         display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0,
       }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: fgColor, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace" }}>MATRIX ME</div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: fgColor, letterSpacing: "0.08em", fontFamily: "'Press Start 2P', monospace" }}>MATRIX_ME</div>
         <div style={{ fontSize: 10, color: "#555" }}>Impulsively made by Inje</div>
       </div>
 
@@ -882,7 +893,7 @@ export default function MatrixWallpaperGenerator() {
         >
           {showPanel ? "✕ CLOSE" : "⚙ SETTINGS"}
         </button>
-        <button style={{ ...S.btn, flex: 1, background: fgColor, opacity: generating ? 0.5 : 1 }} onClick={generate} disabled={generating}>
+        <button style={{ ...S.btn, flex: 1, background: fgColor, opacity: generating ? 0.5 : 1 }} onClick={() => setSeed(Math.floor(Math.random() * 999999))} disabled={generating}>
           {generating ? "⏳" : "▶ RENDER"}
         </button>
         <button style={{ ...S.btn, flex: 0.8, background: "#fff", color: "#000", fontSize: 12 }} onClick={download}>
